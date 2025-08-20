@@ -31,7 +31,15 @@ const buildContext = startServerAndCreateLambdaHandler(
       context.callbackWaitsForEmptyEventLoop = false
       console.log(`Connected in ${NODE_ENV} environment`)
       await connection()
+
+      const authHeader =
+        event.headers?.authorization || event.headers?.Authorization || ''
+      const token = authHeader.startsWith('Bearer ')
+        ? authHeader.slice(7)
+        : null
+
       return {
+        token,
         headers: event.headers,
         functionName: context.functionName,
         event,

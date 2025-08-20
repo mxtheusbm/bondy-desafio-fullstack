@@ -1,5 +1,7 @@
+import { GraphQLResolveInfo } from 'graphql'
+import { me } from './me'
+
 export default {
-  queryTest: () => {
-    return true
-  },
+  me: (parent: any, args: any, context: any, info: GraphQLResolveInfo) =>
+    me(parent, args, context, info),
 }

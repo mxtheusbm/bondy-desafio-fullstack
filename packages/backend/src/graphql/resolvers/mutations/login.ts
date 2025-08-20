@@ -2,6 +2,8 @@ import { GraphQLResolveInfo } from 'graphql'
 import { connection } from '../../../memoryDB/connection'
 import { User } from '../../../models/User'
 import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
+import { UserResponse } from 'src/types'
 
 type LoginArgs = {
   email: string
@@ -13,7 +15,7 @@ export const login = async (
   args: LoginArgs,
   context: any,
   info: GraphQLResolveInfo
-) => {
+): Promise<{ token: string; user: UserResponse }> => {
   const { email, password } = args
 
   try {
@@ -31,11 +33,23 @@ export const login = async (
       throw new Error('Invalid credentials')
     }
 
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+      },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '1h' }
+    )
+
     return {
-      name: user.name,
-      email: user.email,
-      company: user.company || null,
-      password: user.password, // Note: Returning password is not recommended in production
+      token,
+      user: {
+        company: user.company,
+        email: user.email,
+        name: user.name,
+        password: user.password,
+      },
     }
   } catch (error) {
     throw new Error(error instanceof Error ? error.message : 'Login failed')

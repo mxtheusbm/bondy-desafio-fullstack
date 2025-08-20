@@ -19,18 +19,22 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Loading } from "@/components/ui/loading";
+import { useAuth } from "@/contexts/auth";
 import { LOGIN_MUTATION } from "@/graphql/mutations/login";
 import { LoginResponse, LoginVariables } from "@/graphql/types/login-mutation";
 import { LoginFormSchema } from "@/schemas/login";
 import { useMutation } from "@apollo/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 
 export default function Login() {
   const router = useRouter();
+  const { login, user } = useAuth();
 
   const [loginMutation, { loading }] = useMutation<
     LoginResponse,
@@ -38,12 +42,12 @@ export default function Login() {
   >(LOGIN_MUTATION, {
     onCompleted: (data) => {
       toast.success("Login realizado com sucesso!");
-      console.log("Login data:", data);
-      router.push("/home");
+      login(data.login.token, data.login.user);
+      router.push("/");
     },
     onError: (error) => {
-      console.error("Login error:", error.message);
-      toast.error("Erro ao realizar login: " + error.message);
+      toast.error("Erro ao realizar login, tente novamente.");
+      console.error("Login error:", error);
     },
   });
 
@@ -63,6 +67,16 @@ export default function Login() {
       },
     });
   };
+
+  useEffect(() => {
+    if (user) {
+      router.push("/");
+    }
+  }, [user, router]);
+
+  if (loading) {
+    return <Loading />;
+  }
 
   return (
     <Form {...form}>
